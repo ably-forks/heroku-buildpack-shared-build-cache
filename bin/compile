@@ -31,14 +31,28 @@ cache_get_url=$(curl -s https://api.heroku.com/apps/$SHARED_BUILD_CACHE_APP_NAME
   -H "Authorization: Bearer $HEROKU_API_KEY" \
   | jq -r .cache_get_url)
 
+if [ -z "$cache_get_url" ] || [ "$cache_get_url" = "null" ]; then
+  echo "Warning: Could not retrieve cache URL from API"
+  echo "Check that HEROKU_API_KEY is valid and SHARED_BUILD_CACHE_APP_NAME is correct"
+  echo "Continuing build without shared cache..."
+  exit 0
+fi
+
 echo "Restoring shared build cache from app [$SHARED_BUILD_CACHE_APP_NAME]..."
 
 start=`date +%s`
 
-curl -s $cache_get_url | tar -C $CACHE_DIR -zxf -
-
-end=`date +%s`
-echo "(took $((end-start))s)"
-
-echo "Cache directory top-level directory sizes:"
-du -h -d 1 -c $CACHE_DIR | sort -h
+if curl -s -f "$cache_get_url" | tar -C "$CACHE_DIR" -zxf - ; then
+  end=`date +%s`
+  echo "(took $((end-start))s)"
+  echo "Cache directory top-level directory sizes:"
+  du -h -d 1 -c "$CACHE_DIR" | sort -h
+else
+  echo "Warning: Failed to download or extract shared build cache"
+  echo "This may be due to:"
+  echo "  - Expired or invalid HEROKU_API_KEY"
+  echo "  - Invalid SHARED_BUILD_CACHE_APP_NAME"
+  echo "  - Network connectivity issues"
+  echo "  - Corrupted cache data"
+  echo "Continuing build without shared cache..."
+fi
