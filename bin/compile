@@ -15,8 +15,8 @@ fi
 if [ -f $ENV_DIR/SHARED_BUILD_CACHE_APP_NAME ]; then
   SHARED_BUILD_CACHE_APP_NAME=$(cat $ENV_DIR/SHARED_BUILD_CACHE_APP_NAME)
 else
-  echo "SHARED_BUILD_CACHE_APP_NAME must be set to restore a build cache"
-  exit 1
+  echo "SHARED_BUILD_CACHE_APP_NAME not set, skipping shared build cache restoration"
+  exit 0
 fi
 
 if [ -f $ENV_DIR/HEROKU_API_KEY ]; then
